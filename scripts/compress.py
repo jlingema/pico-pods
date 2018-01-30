@@ -1,6 +1,6 @@
 import argparse
 import re
-
+import sys
 
 def parse_args():
     parser = argparse.ArgumentParser()
@@ -12,14 +12,20 @@ def parse_args():
 def compile_file(fname):
     loc = []
     with open(fname, 'r') as source_file:
-        for line in source_file:
-            m = re.match(r'include\(([a-zA-Z0-9-_]+)\)', line)
+        for i, line in enumerate(source_file):
+            line = line.strip()  # remove indentation
+            m = re.match(r'include\(([a-zA-Z0-9-_/]+)\)', line)  # includes
             if line.startswith('--') and len(loc) > 2: # keep title
                 continue
             if m:
-                loc += compile_file(m.group(1) + '.lua')
+                include_fname = m.group(1) + '.lua'
+                if not os.path.isfile(include_fname):
+                    print('Cannot find file for inclusion:', include_fname)
+                    print('       included in', fname, 'line', i+1)
+                    sys.exit(1)
+                loc += compile_file(include_fname)
                 continue
-            loc.append(line.strip())
+            loc.append()
     return loc
 
 if __name__ == "__main__":
